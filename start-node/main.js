@@ -3,7 +3,7 @@ const fs = require('fs');
 const url = require('url');
 const port = 3000;
 
-const templateHTML = (title, list, body) => {
+const templateHTML = (title, list, body, control) => {
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -16,7 +16,7 @@ const templateHTML = (title, list, body) => {
     <body>
     <h1><a href="/">WEB</a></h1>
     <ul>${list}</ul>
-    <a href='/create'>create</a>
+    ${control}
     ${body}
     </body>
     </html>
@@ -31,10 +31,23 @@ const templateList = (filelist) => {
   return list;
 };
 
-const displayPage = (title, body, response) => {
+const templateForm = (process, title = '', description = '') => {
+  return `
+    <form action='/${process}_process' method='post'>
+      <input type='hidden' name='id' value=${title} />
+      <label>title</label>
+      <div><input type='text' name='title' value=${title} /></div>
+      <label>description</label>
+      <div><textarea name='description'>${description}</textarea></div>
+      <div><button>submit</button></div>
+    </form>
+  `;
+};
+
+const displayPage = (title, body, response, control = '') => {
   fs.readdir('./data', (err, filelist) => {
     const list = templateList(filelist);
-    const template = templateHTML(title, list, body);
+    const template = templateHTML(title, list, body, control);
     response.writeHead(200);
     response.end(template);
   });
@@ -51,25 +64,24 @@ const app = http.createServer((request, response) => {
       const title = 'Welcome';
       const description = 'Hello, Node.js!';
       const body = `<h2>${title}</h2><p>${description}</p>`;
-      displayPage(title, body, response);
+      const control = `<a href='/create'>create</a>`;
+      displayPage(title, body, response, control);
     } else {
       fs.readFile(`data/${queryData.id}`, 'utf8', (err, description) => {
         const title = queryData.id;
         const body = `<h2>${title}</h2><p>${description}</p>`;
-        displayPage(title, body, response);
+        const control = `<a href='/create'>create</a> <a href='/update?id=${title}'>update</a> `;
+        displayPage(title, body, response, control);
       });
     }
     return;
   }
   if (pathname === '/create') {
     const title = 'WEB - create';
+    const form = templateForm('create');
     const body = `
       <h2>${title}</h2>
-      <form action='http://localhost:${port}/create_process' method='post'>
-        <div><input type='text' name='title' placeholder='title' /></div>
-        <div><textarea name='description' placeholder='description'></textarea></div>
-        <div><button>submit</button></div>
-      </form>
+      ${form}
     `;
     displayPage(title, body, response);
     return;
@@ -88,6 +100,18 @@ const app = http.createServer((request, response) => {
         response.writeHead(302, { Location: `/?id=${title}` });
         response.end();
       });
+    });
+    return;
+  }
+  if (pathname === '/update') {
+    fs.readFile(`data/${queryData.id}`, 'utf8', (err, description) => {
+      const title = queryData.id;
+      const form = templateForm('update', title, description);
+      const body = `
+        <h2>${title} - update</h2>
+        ${form}
+      `;
+      displayPage(title, body, response);
     });
     return;
   }
