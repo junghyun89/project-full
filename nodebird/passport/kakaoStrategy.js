@@ -16,22 +16,16 @@ module.exports = () => {
             where: { snsId: profile.id, provider: 'kakao' },
           });
           if (exUser) {
-            const tokenUser = {
-              user: exUser,
-              accessToken: accessToken || '',
-            };
-            done(null, {
-              id: tokenUser.user.id,
-              accessToken: tokenUser.accessToken,
-            });
+            exUser.accessToken = accessToken;
+            done(null, exUser);
           } else {
             const newUser = await User.create({
               email: profile._json && profile._json.kakao_account_email,
-              nick: profile.profile_nickname,
+              nick: profile.username,
               snsId: profile.id,
               provider: 'kakao',
+              accessToken: accessToken,
             });
-            console.log(newUser.nick);
             done(null, newUser);
           }
         } catch (err) {

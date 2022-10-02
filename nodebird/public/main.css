@@ -23,7 +23,7 @@ input[type='text'], input[type='email'], input[type='password'], textarea {
   border: 1px solid silver;
   outline: none;
 }
-.container { padding: 0 10px; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;}
+.container { padding: 0 10px; width: 100%; min-height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center;}
 @media screen and (min-width: 800px) {
   .container { width: 800px; margin: 0 auto; flex-direction: row;}
 }
@@ -39,18 +39,18 @@ input[type='text'], input[type='email'], input[type='password'], textarea {
   margin: 10px 0;
 }
 .profile {
-  text-align: left;
-  padding: 10px;
-  margin-right: 0;
+  text-align: center;
+  padding: 20px 10px ;
   border-radius: 4px;
   border: 1px solid silver;
   background: rgb(137, 179, 55);
 }
 .user-name { font-weight: bold; font-size: 18px; }
 .count { font-weight: bold; color: darkolivegreen; font-size: 18px; }
+#my-profile, #logout { margin: 0 5px;}
 @media screen and (min-width: 800px) {
-  .profile-wrap { margin-bottom: 0;}
-  .profile {margin-right: 10px;}
+  .profile-wrap { margin-bottom: 0; width:500px}
+  .profile {margin-right: 10px; }
 }
 .timeline {
   margin-top: 10px;

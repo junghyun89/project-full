@@ -74,26 +74,23 @@ router.get('/logout', isLoggedIn, isNotKakao, (req, res) => {
 
 router.get('/kakao/logout', isKakao, async (req, res) => {
   try {
-    // const ACCESS_TOKEN = res.user.dataValue.accessToken;
-    const REDIRECT_URI = '/auth/kakao/logout';
+    console.log('info', req.user.accessToken);
+    const ACCESS_TOKEN = req.user.accessToken;
     let logout = await axios({
       method: 'post',
-      url: 'https://kapi.kakao.com/v1/user/logout',
-      data: {
-        client_id: process.env.KAKAO_ID,
-        logout_redirect_uri: REDIRECT_URI,
+      url: 'https://kapi.kakao.com/v1/user/unlink',
+      headers: {
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
       },
-    }).then(
-      req.logout(() => {
-        req.session.destroy();
-        res.redirect('/');
-      })
-    );
-    console.log('link', logout);
+    });
   } catch (err) {
     console.error(err);
     res.json(err);
   }
+  req.logout(() => {
+    req.session.destroy();
+    res.redirect('/');
+  });
 });
 
 module.exports = router;

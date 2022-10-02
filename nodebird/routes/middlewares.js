@@ -19,7 +19,6 @@ exports.isNotLoggedIn = (req, res, next) => {
 };
 
 exports.isKakao = (req, res, next) => {
-  console.log('req', req.user);
   if (req.user.dataValues.provider === 'kakao') {
     console.log('kakao');
     next();
