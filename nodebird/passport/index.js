@@ -35,17 +35,3 @@ module.exports = () => {
 
 local();
 kakao();
-
-// passport.serializeUser((data, done) => {
-//   done(null, { user: data.user.snsId, accessToken: data.accessToken });
-// });
-
-// passport.deserializeUser((user, done) => {
-//   User.findOne({ where: { id: user.snsId } })
-//     .then((data) => {
-//       console.log('data', data);
-//       const tokenUser = { user: data, accessToken: user.accessToken };
-//       done(null, tokenUser);
-//     })
-//     .catch((err) => done(err));
-// });

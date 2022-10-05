@@ -59,4 +59,27 @@ router.post('/', isLoggedIn, upload2.none(), async (req, res, next) => {
   }
 });
 
+router.delete('/:id', isLoggedIn, async (req, res, next) => {
+  try {
+    const post = await Post.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+    await post.destroy();
+    await post.removeHashtags(parseInt(req.params.id, 10));
+
+    const imgFile = `uploads/${post.img.substr(5)}`;
+    if (fs.existsSync(imgFile)) {
+      try {
+        fs.unlinkSync(imgFile);
+      } catch (err) {
+        console.err(err);
+      }
+    }
+    res.send('success');
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+});
+
 module.exports = router;

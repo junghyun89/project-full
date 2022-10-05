@@ -5,6 +5,7 @@ const { Post, User, Hashtag } = require('../models');
 const router = express.Router();
 
 router.use((req, res, next) => {
+  res.locals.path = req.path;
   res.locals.user = req.user;
   res.locals.followerCount = req.user ? req.user.Followers.length : 0;
   res.locals.followingCount = req.user ? req.user.Followings.length : 0;

@@ -30,12 +30,20 @@
             <input type="hidden" value="{{twit.User.id}}" class="twit-user-id">
             <input type="hidden" value="{{twit.id}}" class="twit-id">
             <div class="twit-author">{{twit.User.nick}}</div>
-            {% if not followerIdList.includes(twit.User.id) and twit.User.id !== user.id %}
+            {% if not followerIdList.includes(twit.User.id) and user and twit.User.id !== user.id %}
               <button class="twit-follow">팔로우하기</button>
+            {% elif followerIdList.includes(twit.User.id) and user %}
+              <button class="twit-follow unfollow">팔로우끊기</button>
             {% endif %}
             <div class="twit-content">{{twit.content}}</div>
             {% if twit.img %}
               <div class="twit-img"><img src="{{twit.img}}" alt="섬네일"></div>
+            {% endif %}
+            {% if user and twit.User.id !== user.id %}
+              <button class="twit-follow">♡</button>
+            {% elif user and twit.User.id === user.id %}
+              <a href="/" class="btn">수정</a>
+              <button class="btn delete" type="submit">삭제</button>
             {% endif %}
           </div>
         {% endfor %}
@@ -67,8 +75,10 @@
         if (myId) {
           const userId = tag.parentNode.querySelector('.twit-user-id').value;
           if (userId !== myId.value) {
-            if (confirm('팔로잉하시겠습니까?')) {
-              axios.post(`/user/${userId}/follow`)
+            let confirmMessage = tag.classList.contains('unfollow') ? '언팔로우' : '팔로우'
+            let followOrNot = tag.classList.contains('unfollow') ? 'unfollow' : 'follow'
+            if (confirm(`${confirmMessage}하시겠습니까?`)) {
+              axios.post(`/user/${userId}/${followOrNot}`)
                 .then(() => {
                   location.reload();
                 })
@@ -76,7 +86,27 @@
                   console.error(err);
                 });
             }
-          }
+          } 
+        }
+      });
+    });
+    document.querySelectorAll('.delete').forEach(function(tag) {
+      tag.addEventListener('click', function() {
+        const myId = document.querySelector('#my-id');
+        if (myId) {
+          const userId = tag.parentNode.querySelector('.twit-user-id').value;
+          const twitId = tag.parentNode.querySelector('.twit-id').value;
+          if (userId === myId.value) {
+            if (confirm(`게시글을 삭제하시겠습니까?`)) {
+              axios.delete(`/post/${twitId}`)
+                .then(() => {
+                  location.reload();
+                })
+                .catch((err) => {
+                  console.error(err);
+                });
+            }
+          } 
         }
       });
     });

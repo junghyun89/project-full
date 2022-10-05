@@ -22,7 +22,11 @@
               <div class="count follower-count">{{followerCount}}</div>
             </div>
           <input id="my-id" type="hidden" value="{{user.id}}">
+        {% if path !== '/profile' %}
           <a id="my-profile" href="/profile" class="btn">내 프로필</a>
+        {% elif path === '/profile' %}
+          <a id="my-profile" href="/" class="btn">홈</a>
+        {% endif %}
         {% if user.provider === 'local' %}
           <a id="logout" href="/auth/logout" class="btn">로그아웃</a>
         {% elif user.provider === 'kakao' %}
