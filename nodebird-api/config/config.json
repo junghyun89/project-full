@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "jung",
+    "password": "gus4150",
+    "database": "nodebird",
+    "host": "14.34.27.202",
+    "dialect": "mysql"
+  },
+  "test": {
+    "username": "jung",
+    "password": null,
+    "database": "database_test",
+    "host": "14.34.27.202",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "jung",
+    "password": null,
+    "database": "database_production",
+    "host": "14.34.27.202",
+    "dialect": "mysql"
+  }
+}
