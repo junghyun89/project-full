@@ -12,6 +12,7 @@ router.use((req, res, next) => {
   res.locals.followerIdList = req.user
     ? req.user.Followings.map((f) => f.id)
     : [];
+  res.locals.likerIdList = req.post ? req.post.Liker.map((l) => l.id) : [];
   next();
 });
 
@@ -26,11 +27,23 @@ router.get('/join', isNotLoggedIn, (req, res) => {
 router.get('/', async (req, res, next) => {
   try {
     const posts = await Post.findAll({
-      include: {
-        model: User,
-        attributes: ['id', 'nick'],
-      },
+      include: [
+        {
+          // 작성자
+          model: User,
+          attributes: ['id', 'nick'],
+        },
+        {
+          // 좋아요 user
+          model: User,
+          attributes: ['id'],
+          as: 'Liker',
+        },
+      ],
       order: [['createdAt', 'DESC']],
+    });
+    posts.forEach((post) => {
+      post.liked = post.Liker.find((l) => l.id === req.user?.id);
     });
     res.render('main', {
       title: 'NodeBird',

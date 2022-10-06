@@ -39,10 +39,12 @@
             {% if twit.img %}
               <div class="twit-img"><img src="{{twit.img}}" alt="섬네일"></div>
             {% endif %}
-            {% if user and twit.User.id !== user.id %}
-              <button class="twit-follow">♡</button>
+            {% if user and twit.User.id !== user.id and not twit.liked%}
+              <button class="twit-like">♡</button>
+            {% elif user and twit.User.id !== user.id and twit.liked%}
+              <button class="twit-like unlike">♥</button>
             {% elif user and twit.User.id === user.id %}
-              <a href="/" class="btn">수정</a>
+              <!-- <button class="btn update" type="submit">수정</button> -->
               <button class="btn delete" type="submit">삭제</button>
             {% endif %}
           </div>
@@ -58,15 +60,19 @@
         const formData = new FormData();
         console.log(this, this.files);
         formData.append('img', this.files[0]);
-        axios.post('/post/img', formData)
-          .then((res) => {
-            document.getElementById('img-url').value = res.data.url;
-            document.getElementById('img-preview').src = res.data.url;
-            document.getElementById('img-preview').style.display = 'inline';
-          })
-          .catch((err) => {
-            console.error(err);
-          });
+        axios({
+          method: 'post',
+          url: '/post/img', 
+          data: formData
+        })
+        .then((res) => {
+          document.getElementById('img-url').value = res.data.url;
+          document.getElementById('img-preview').src = res.data.url;
+          document.getElementById('img-preview').style.display = 'inline';
+        })
+        .catch((err) => {
+          console.error(err);
+        });
       });
     }
     document.querySelectorAll('.twit-follow').forEach(function(tag) {
@@ -74,39 +80,106 @@
         const myId = document.querySelector('#my-id');
         if (myId) {
           const userId = tag.parentNode.querySelector('.twit-user-id').value;
-          if (userId !== myId.value) {
-            let confirmMessage = tag.classList.contains('unfollow') ? '언팔로우' : '팔로우'
-            let followOrNot = tag.classList.contains('unfollow') ? 'unfollow' : 'follow'
-            if (confirm(`${confirmMessage}하시겠습니까?`)) {
-              axios.post(`/user/${userId}/${followOrNot}`)
-                .then(() => {
-                  location.reload();
-                })
-                .catch((err) => {
-                  console.error(err);
-                });
-            }
-          } 
+          if (userId === myId.value) return;
+          const unfollow = tag.classList.contains('unfollow')
+          let confirmMessage =  unfollow ? '언팔로우' : '팔로우'
+          if (!confirm(`${confirmMessage}하시겠습니까?`)) return;
+          if (unfollow) {
+            axios({
+              method: 'delete',
+              url: `/user/${userId}/follow`
+            })
+            .then(() => {
+              location.reload();
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+          } else {
+            axios({
+              method: 'post',
+              url: `/user/${userId}/follow`
+            })
+            .then(() => {
+              location.reload();
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+          }
         }
       });
     });
+    // document.querySelectorAll('.update').forEach(function(tag) {
+    //   tag.addEventListener('click', function() {
+    //     const myId = document.querySelector('#my-id');
+    //     if (myId) {
+    //       const userId = tag.parentNode.querySelector('.twit-user-id').value;
+    //       const twitId = tag.parentNode.querySelector('.twit-id').value;
+    //       if (userId !== myId.value) return;
+    //       const twitForm = document.querySelector('#twit-form');
+    //       axios({
+    //         method: 'patch',
+    //         url: `/post/${twitId}`,
+    //       })
+    //       .then(() => {
+    //           location.reload();
+    //       })
+    //       .catch((err) => {
+    //         console.error(err);
+    //       });
+    //     }
+    //   });
+    // });
     document.querySelectorAll('.delete').forEach(function(tag) {
       tag.addEventListener('click', function() {
         const myId = document.querySelector('#my-id');
         if (myId) {
           const userId = tag.parentNode.querySelector('.twit-user-id').value;
           const twitId = tag.parentNode.querySelector('.twit-id').value;
-          if (userId === myId.value) {
-            if (confirm(`게시글을 삭제하시겠습니까?`)) {
-              axios.delete(`/post/${twitId}`)
-                .then(() => {
-                  location.reload();
-                })
-                .catch((err) => {
-                  console.error(err);
-                });
-            }
-          } 
+          if (userId !== myId.value) return;
+          if (confirm(`게시글을 삭제하시겠습니까?`)) {
+            axios({
+              method: 'delete',
+              url: `/post/${twitId}`
+            })
+            .then(() => {
+                location.reload();
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+          }
+        }
+      });
+    });
+    document.querySelectorAll('.twit-like').forEach(function(tag) {
+      tag.addEventListener('click', function() {
+        const myId = document.querySelector('#my-id');
+        if (myId) {
+          const twitId = tag.parentNode.querySelector('.twit-id').value;
+          const unlike= tag.classList.contains('unlike')
+          if (unlike) {
+            if (!confirm('취소하시겠습니까?')) return;
+            axios({
+              method: 'delete',
+              url: `/post/${twitId}/like`
+            })
+            .then(() => {
+              location.reload();
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+          } else {
+            axios.post(`/post/${twitId}/like`)
+            .then(() => {
+              location.reload();
+            })
+            .catch((err) => {
+              console.error(err);
+            });
+          }
         }
       });
     });

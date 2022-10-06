@@ -72,9 +72,31 @@ router.delete('/:id', isLoggedIn, async (req, res, next) => {
       try {
         fs.unlinkSync(imgFile);
       } catch (err) {
-        console.err(err);
+        console.error(err);
       }
     }
+    res.send('success');
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+});
+
+router.post('/:id/like', async (req, res, next) => {
+  try {
+    const post = await Post.findOne({ where: { id: req.params.id } });
+    await post.addLiker(parseInt(req.user.id, 10));
+    res.send('success');
+  } catch (err) {
+    console.error(err);
+    next(err);
+  }
+});
+
+router.delete('/:id/like', async (req, res, next) => {
+  try {
+    const post = await Post.findOne({ where: { id: req.params.id } });
+    await post.removeLiker(parseInt(req.user.id, 10));
     res.send('success');
   } catch (err) {
     console.error(err);
