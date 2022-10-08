@@ -29,6 +29,7 @@ router.post('/domain', isLoggedIn, async (req, res, next) => {
       type: req.body.type,
       clientSecret: uuidv4(),
     });
+    res.redirect('/')
   } catch (err) {
     console.error(err);
     next(err);
