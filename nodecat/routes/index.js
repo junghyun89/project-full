@@ -19,14 +19,25 @@ const request = async (req, api) => {
       headers: { authorization: req.session.jwt },
     });
     const result = await response.json();
-    if (result.code === 419) {
-      // 토큰 만료 시
-      delete req.session.jwt;
-      return request(req, api);
+    if (result.code !== 200) {
+      if (result.code === 419) {
+        const err = new Error(`${result.message}`);
+        err.name = 'ExpiredToken';
+        throw err;
+      } else {
+        const err = new Error(`${result.message}`);
+        err.name = `${result.code}`;
+        throw err.message;
+      }
     }
     return result;
   } catch (error) {
-    return error.response;
+    if (error.name === 'ExpiredToken') {
+      //   // 토큰 만료 시
+      delete req.session.jwt;
+      return request(req, api);
+    }
+    return { error };
   }
 };
 

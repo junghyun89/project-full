@@ -29,7 +29,7 @@ router.post('/token', apiLimiter, async (req, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: '30m',
+        expiresIn: '1m',
         issuer: 'nodebird',
       }
     );
@@ -51,10 +51,10 @@ router.get('/test', verifyToken, apiLimiter, (req, res) => {
   res.json(req.decoded);
 });
 
-router.get('/posts/my', apiLimiter, verifyToken, (req, res) => {
+router.get('/posts/my', verifyToken, apiLimiter, (req, res) => {
   Post.findAll({ where: { userId: req.decoded.id } })
     .then((posts) => {
-      console.log(posts);
+      // console.log(posts);
       res.json({
         code: 200,
         payload: posts,
