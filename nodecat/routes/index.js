@@ -8,7 +8,10 @@ const request = async (req, api) => {
     if (!req.session.jwt) {
       const response = await fetch(`${URL}/token`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          origin: 'http://localhost:4000',
+        },
         body: JSON.stringify({ clientSecret: process.env.CLIENT_SECRET }),
       });
       const tokenResult = await response.json();
@@ -16,7 +19,10 @@ const request = async (req, api) => {
     }
     const response = await fetch(`${URL}${api}`, {
       method: 'GET',
-      headers: { authorization: req.session.jwt },
+      headers: {
+        authorization: req.session.jwt,
+        origin: 'http://localhost:4000',
+      },
     });
     const result = await response.json();
     if (result.code !== 200) {
@@ -44,6 +50,26 @@ const request = async (req, api) => {
 router.get('/mypost', async (req, res, next) => {
   try {
     const result = await request(req, '/posts/my');
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get('/followers', async (req, res, next) => {
+  try {
+    const result = await request(req, '/followers/my');
+    res.json(result);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get('/followings', async (req, res, next) => {
+  try {
+    const result = await request(req, '/followings/my');
     res.json(result);
   } catch (error) {
     console.error(error);
