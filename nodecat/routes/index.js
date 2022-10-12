@@ -12,7 +12,7 @@ const request = async (req, api) => {
           'Content-Type': 'application/json',
           origin: 'http://localhost:4000',
         },
-        body: JSON.stringify({ clientSecret: process.env.CLIENT_SECRET }),
+        body: JSON.stringify({ serverSecret: process.env.SERVER_SECRET }),
       });
       const tokenResult = await response.json();
       req.session.jwt = tokenResult.token;

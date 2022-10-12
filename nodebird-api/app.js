@@ -15,6 +15,8 @@ const indexRouter = require('./routes');
 const { sequelize } = require('./models');
 const passportConfig = require('./passport');
 
+const { swaggerUi, specs } = require('./swagger');
+
 const app = express();
 passportConfig();
 app.set('port', process.env.PORT || 8002);
@@ -51,6 +53,7 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/v1', v1);
 app.use('/v2', v2);
 app.use('/auth', authRouter);
