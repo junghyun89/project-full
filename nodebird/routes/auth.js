@@ -10,7 +10,6 @@ const {
   isKakao,
 } = require('./middlewares');
 const User = require('../models/user');
-const { request } = require('express');
 
 const router = express.Router();
 
