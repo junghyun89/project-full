@@ -16,6 +16,7 @@ const roomSchema = new Schema({
     type: String,
     required: true,
   },
+  members: [String],
   password: String,
   createdAt: {
     type: Date,

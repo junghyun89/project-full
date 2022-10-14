@@ -3,6 +3,14 @@
 {% block content %}
   <h1>{{title}}</h1>
   <a href="/" id="exit-btn">방 나가기</a>
+  <div class="number">
+    참여자 :
+    <span class="number-count">{{number}}</span>
+  </div>
+  <div class="owner">
+    방장 :
+    <span class="room-owner" style="color: {{room.owner}}">{{room.owner}}</span>
+  </div>
   <fieldset>
     <legend>채팅 내용</legend>
     <div id="chat-list">
@@ -46,6 +54,7 @@
       path: '/socket.io',
     });
     socket.on('join', function (data) {
+      document.querySelector('.number-count').textContent = (data.number)
       const div = document.createElement('div');
       div.classList.add('system');
       const chat = document.createElement('div');
@@ -54,6 +63,7 @@
       document.querySelector('#chat-list').appendChild(div);
     });
     socket.on('exit', function (data) {
+      document.querySelector('.number-count').textContent = (data.number)
       const div = document.createElement('div');
       div.classList.add('system');
       const chat = document.createElement('div');
@@ -70,6 +80,15 @@
       }
       const name = document.createElement('div');
       name.textContent = data.user;
+      const owner = document.querySelector('.room-owner').textContent;
+      if ('{{user}}' === owner && name.textContent !== owner) {
+        const banBtn = document.createElement('button');
+        banBtn.className = 'ban';
+        banBtn.textContent = '강퇴';
+        banBtn.dataset.user = data.user;
+        banBtn.addEventListener('click', ban);
+        name.appendChild(banBtn)
+      }
       div.appendChild(name);
       if (data.chat) {
         const chat = document.createElement('div');
@@ -109,5 +128,22 @@
           console.error(err);
         });
     });
+    function ban(e) {
+      const id = e.target.dataset.user;
+      console.log('----id', id)
+      const name = e.target.parentElement.textContent;
+      const owner = document.querySelector('.room-owner').textContent;
+      console.log('{{user}}', owner);
+      if(confirm(`${name}를 강퇴하시겠습니까?`)) {
+        socket.emit('ban', { id });
+      }
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.ban'), function() {
+      el.addEventListener('click', ban);
+    });
+    socket.on('ban', function() {
+      alert('강퇴되었습니다.');
+      location.href = '/'
+    })
   </script>
 {% endblock %}

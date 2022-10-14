@@ -38,34 +38,57 @@ module.exports = (server, app, sessionMiddleware) => {
     socket.to(roomId).emit('join', {
       user: 'system',
       chat: `${req.session.color}님이 입장하셨습니다.`,
+      number: socket.adapter.rooms[roomId].length,
     });
 
-    socket.on('disconnect', () => {
-      console.log('chat 네임스페이스 접속 해제');
-      socket.leave(roomId);
-      const currentRoom = socket.adapter.rooms[roomId];
-      const userCount = currentRoom ? currentRoom.length : 0;
-      if (userCount === 0) {
+    socket.on('disconnect', async () => {
+      try {
+        console.log('chat 네임스페이스 접속 해제');
+        socket.leave(roomId);
         const signedCookie = req.signedCookies['connect.sid'];
         const connectSID = cookie.sign(signedCookie, process.env.COOKIE_SECRET);
-        axios
-          .delete(`http://localhost:8005/room/${roomId}`, {
+        const response = await axios.get(
+          `http://localhost:8005/room/${roomId}/owner`,
+          {
             headers: {
               Cookie: `connect.sid=s%3A${connectSID}`,
             },
-          })
-          .then(() => {
-            console.log('방 제거 요청 성공');
-          })
-          .catch((error) => {
-            console.error(Error);
+          }
+        );
+        const owner = response.data;
+        const currentRoom = socket.adapter.rooms[roomId];
+        const userCount = currentRoom ? currentRoom.length : 0;
+        // if (req.session.color === owner) {
+        //   return await axios.patch(
+        //     `http://localhost:8005/room/${roomId}/owner`,
+        //     {
+        //       headers: {
+        //         Cookie: `connect.sid=s%3A${connectSID}`,
+        //       },
+        //       // newOwner,
+        //     }
+        //   );
+        // }
+        if (userCount === 0) {
+          await axios.delete(`http://localhost:8005/room/${roomId}`, {
+            headers: {
+              Cookie: `connect.sid=s%3A${connectSID}`,
+            },
           });
-      } else {
-        socket.to(roomId).emit('exit', {
-          user: 'system',
-          chat: `${req.session.color}님이 퇴장하셨습니다.`,
-        });
+          console.log('방 제거 요청 성공');
+        } else {
+          socket.to(roomId).emit('exit', {
+            user: 'system',
+            chat: `${req.session.color}님이 퇴장하셨습니다.`,
+            number: socket.adapter.rooms[roomId].length,
+          });
+        }
+      } catch (error) {
+        console.error(error);
       }
+    });
+    socket.on('ban', (data) => {
+      socket.to(data.id).emit('ban');
     });
   });
 };
