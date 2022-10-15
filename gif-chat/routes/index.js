@@ -5,6 +5,7 @@ const fs = require('fs');
 
 const Room = require('../schemas/room');
 const Chat = require('../schemas/chat');
+const User = require('../schemas/user');
 
 const router = express.Router();
 
@@ -33,7 +34,7 @@ router.post('/room', async (req, res, next) => {
     });
     const io = req.app.get('io');
     io.of('/room').emit('newRoom', newRoom);
-    if (newRoom.password === 'true') {
+    if (newRoom.password) {
       res.redirect(`/room/${newRoom._id}?password=${req.body.password}`);
     } else {
       res.redirect(`/room/${newRoom._id}`);
@@ -44,10 +45,44 @@ router.post('/room', async (req, res, next) => {
   }
 });
 
+router.post('/user', async (req, res, next) => {
+  try {
+    await User.create({
+      socket: req.body.socket,
+      name: req.body.name,
+      room: req.body.room,
+    });
+    res.send('ok');
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get(`/user`, async (req, res, next) => {
+  try {
+    const user = await User.findOne({ name: req.query.name });
+    res.send({socket: user.socket});
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.delete(`/user`, async (req, res, next) => {
+  try {
+    await User.remove({ name: req.query.name });
+    res.send('ok');
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
 router.get('/room/:id/owner', async (req, res, next) => {
   try {
     const room = await Room.findOne({ _id: req.params.id });
-    res.send(room.owner);
+    res.send({ owner: room.owner });
   } catch (error) {
     console.error(error);
     next(error);
@@ -126,9 +161,9 @@ router.get('/room/:id', async (req, res, next) => {
       room,
       title: room.title,
       chats: chats,
+      user: req.session.color,
       number:
         (rooms && rooms[req.params.id] && rooms[req.params.id].length + 1) || 1,
-      user: req.session.color,
     });
   } catch (error) {
     console.error(error);
@@ -136,10 +171,24 @@ router.get('/room/:id', async (req, res, next) => {
   }
 });
 
+router.patch('/room/:id', async (req, res, next) => {
+  try {
+    const room = await Room.findOne({ _id: req.params.id });
+    room.update({
+      owner: req.query.newOwner
+    })
+    res.send('ok');
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
 router.delete('/room/:id', async (req, res, next) => {
   try {
     await Room.remove({ _id: req.params.id });
     await Chat.remove({ room: req.params.id });
+    await User.remove({ room: req.params.id });
     res.send('ok');
     setTimeout(() => {
       req.app.get('io').of('/room').emit('removeRoom', req.params.id);
