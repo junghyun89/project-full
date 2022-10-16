@@ -35,14 +35,9 @@ module.exports = (server, app, sessionMiddleware) => {
       .split('/')
       [referer.split('/').length - 1].replace(/\?,+/, '');
     socket.join(roomId);
-    socket.to(roomId).emit('join', {
-      user: 'system',
-      chat: `${req.session.color}님이 입장하셨습니다.`,
-      number: socket.adapter.rooms[roomId].length,
-    });
-
     const signedCookie = req.signedCookies['connect.sid'];
     const connectSID = cookie.sign(signedCookie, process.env.COOKIE_SECRET);
+
     await axios.post(`http://localhost:8005/user`, {
       socket: socket.id,
       name: req.session.color,
@@ -53,13 +48,41 @@ module.exports = (server, app, sessionMiddleware) => {
     });
     console.log('사용자 생성 요청 성공');
 
+    const response = await axios.get(
+      `http://localhost:8005/room/${roomId}/users`,
+      {
+        headers: {
+          Cookie: `connect.sid=s%3A${connectSID}`,
+        },
+      }
+    );
+    const users = [];
+    response.data.forEach((user) => {
+      users.push(user.name);
+    });
+
+    socket.to(roomId).emit('join', {
+      user: 'system',
+      chat: `${req.session.color}님이 입장하셨습니다.`,
+      number: socket.adapter.rooms[roomId].length,
+      users: users,
+    });
+
     socket.on('disconnect', async () => {
       try {
         console.log('chat 네임스페이스 접속 해제');
         socket.leave(roomId);
         const currentRoom = socket.adapter.rooms[roomId];
         const userCount = currentRoom ? currentRoom.length : 0;
-
+        await axios.delete(`http://localhost:8005/user`, {
+          headers: {
+            Cookie: `connect.sid=s%3A${connectSID}`,
+          },
+          params: {
+            name: req.session.color,
+          },
+        });
+        console.log('사용자 제거 요청 성공');
         const response = await axios.get(
           `http://localhost:8005/room/${roomId}/owner`,
           {
@@ -68,15 +91,20 @@ module.exports = (server, app, sessionMiddleware) => {
             },
           }
         );
-        const owner = response.data.owner;
-        if (req.session.color === owner) {
-          return await axios.patch(`http://localhost:8005/room/${roomId}`, {
+        let owner = response.data.owner;
+
+        const result = await axios.get(
+          `http://localhost:8005/room/${roomId}/users`,
+          {
             headers: {
               Cookie: `connect.sid=s%3A${connectSID}`,
             },
-            newOwner: '',
-          });
-        }
+          }
+        );
+        const users = [];
+        result.data.forEach((user) => {
+          users.push(user.name);
+        });
         if (userCount === 0) {
           await axios.delete(`http://localhost:8005/room/${roomId}`, {
             headers: {
@@ -85,20 +113,24 @@ module.exports = (server, app, sessionMiddleware) => {
           });
           console.log('방 제거 요청 성공');
         } else {
+          if (req.session.color === owner) {
+            const newOwner = await axios.patch(
+              `http://localhost:8005/room/${roomId}`,
+              {
+                headers: {
+                  Cookie: `connect.sid=s%3A${connectSID}`,
+                },
+              }
+            );
+            owner = newOwner.data;
+          }
           socket.to(roomId).emit('exit', {
             user: 'system',
             chat: `${req.session.color}님이 퇴장하셨습니다.`,
             number: socket.adapter.rooms[roomId].length,
+            owner: owner,
+            users: users,
           });
-          await axios.delete(`http://localhost:8005/user`, {
-            headers: {
-              Cookie: `connect.sid=s%3A${connectSID}`,
-            },
-            params: {
-              name: req.session.color,
-            },
-          });
-          console.log('사용자 제거 요청 성공');
         }
       } catch (error) {
         console.error(error);

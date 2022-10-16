@@ -3,9 +3,9 @@
 {% block content %}
   <h1>{{title}}</h1>
   <a href="/" id="exit-btn">방 나가기</a>
-  <div class="number">
+  <div class="users">
     참여자 :
-    <span class="number-count">{{number}}</span>
+    <span class="number-count">({{number}})</span>
   </div>
   <div class="owner">
     방장 :
@@ -54,7 +54,14 @@
       path: '/socket.io',
     });
     socket.on('join', function (data) {
-      document.querySelector('.number-count').textContent = (data.number)
+      document.querySelector('.number-count').textContent = `(${data.number})`;
+      const users = data.users;
+      users.forEach((name) => {
+        const span = document.createElement('span');
+        span.textContent = `${name} `;
+        span.style.color = name;
+        document.querySelector('.number-count').insertAdjacentElement('afterbegin', span);
+      })
       const div = document.createElement('div');
       div.classList.add('system');
       const chat = document.createElement('div');
@@ -63,7 +70,16 @@
       document.querySelector('#chat-list').appendChild(div);
     });
     socket.on('exit', function (data) {
-      document.querySelector('.number-count').textContent = (data.number)
+      document.querySelector('.number-count').textContent = `(${data.number})`
+      document.querySelector('.room-owner').textContent = (data.owner)
+      document.querySelector('.room-owner').style.color = (data.owner)
+      const users = data.users;
+      users.forEach((name) => {
+        const span = document.createElement('span');
+        span.textContent = `${name} `;
+        span.style.color = name;
+        document.querySelector('.number-count').insertAdjacentElement('afterbegin', span);
+      })
       const div = document.createElement('div');
       div.classList.add('system');
       const chat = document.createElement('div');

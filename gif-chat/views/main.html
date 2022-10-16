@@ -19,7 +19,7 @@
         <td>{{room.title}}</td>
         <td>{{'비밀방' if room.password else '공개방'}}</td>
         <td>{{room.max}}</td>
-        <td style="color: {{room.owner}}">{{room.owner}}</td>
+        <td id="room-owner" style="color: {{room.owner}}">{{room.owner}}</td>
         <td>
           <button
             data-password="{{'true' if room.password else 'false'}}"
@@ -66,6 +66,11 @@
     tr.appendChild(td);
     tr.dataset.id = data._id;
     document.querySelector('table tbody').appendChild(tr); // 화면에 추가
+  });
+
+  socket.on('leaveRoom', function (data) {
+    document.querySelector('#room-owner').textContent = data
+    document.querySelector('#room-owner').style.color = data
   });
 
   socket.on('removeRoom', function (data) { // 방 제거 이벤트 시 id가 일치하는 방 제거

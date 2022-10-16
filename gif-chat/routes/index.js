@@ -62,7 +62,7 @@ router.post('/user', async (req, res, next) => {
 router.get(`/user`, async (req, res, next) => {
   try {
     const user = await User.findOne({ name: req.query.name });
-    res.send({socket: user.socket});
+    res.send({ socket: user.socket });
   } catch (error) {
     console.error(error);
     next(error);
@@ -83,6 +83,16 @@ router.get('/room/:id/owner', async (req, res, next) => {
   try {
     const room = await Room.findOne({ _id: req.params.id });
     res.send({ owner: room.owner });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.get('/room/:id/users', async (req, res, next) => {
+  try {
+    const users = await User.find({ room: req.params.id }, 'name');
+    res.send(users);
   } catch (error) {
     console.error(error);
     next(error);
@@ -157,6 +167,9 @@ router.get('/room/:id', async (req, res, next) => {
       return res.redirect(`/?error=허용 인원을 초과했습니다.`);
     }
     const chats = await Chat.find({ room: room._id }).sort('createdAt');
+    const users = await User.find({ room: req.params.id }, 'name');
+    const owner = room.owner;
+
     return res.render('chat', {
       room,
       title: room.title,
@@ -164,6 +177,10 @@ router.get('/room/:id', async (req, res, next) => {
       user: req.session.color,
       number:
         (rooms && rooms[req.params.id] && rooms[req.params.id].length + 1) || 1,
+      users:
+        (rooms && rooms[req.params.id] && rooms[req.params.id].length + 1) === 1
+          ? owner
+          : users,
     });
   } catch (error) {
     console.error(error);
@@ -173,11 +190,18 @@ router.get('/room/:id', async (req, res, next) => {
 
 router.patch('/room/:id', async (req, res, next) => {
   try {
-    const room = await Room.findOne({ _id: req.params.id });
-    room.update({
-      owner: req.query.newOwner
-    })
-    res.send('ok');
+    const user = await User.findOne({ room: req.params.id });
+    const room = await Room.findOneAndUpdate(
+      { _id: req.params.id },
+      {
+        owner: user.name,
+      },
+      {
+        new: true,
+      }
+    );
+    res.send(room.owner);
+    req.app.get('io').of('/room').emit('leaveRoom', room.owner);
   } catch (error) {
     console.error(error);
     next(error);
