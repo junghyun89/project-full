@@ -5,7 +5,11 @@
   <a href="/" id="exit-btn">방 나가기</a>
   <div class="users">
     참여자 :
-    <span class="number-count">({{number}})</span>
+    <span class="number-count">
+      {% for user in users %}
+        <span style="color: {{user}}">{{user}}</span>
+      {% endfor %}
+    ({{number}})</span>
   </div>
   <div class="owner">
     방장 :
@@ -54,14 +58,18 @@
       path: '/socket.io',
     });
     socket.on('join', function (data) {
-      document.querySelector('.number-count').textContent = `(${data.number})`;
+      const numberTag = document.querySelector('.number-count')
+      numberTag.innerHTML = ''
+      numberTag.textContent = `(${data.number})`
       const users = data.users;
+      const usersSpan = document.createElement('span');
       users.forEach((name) => {
         const span = document.createElement('span');
         span.textContent = `${name} `;
         span.style.color = name;
-        document.querySelector('.number-count').insertAdjacentElement('afterbegin', span);
+        usersSpan.appendChild(span);
       })
+      numberTag.insertAdjacentElement('afterbegin',usersSpan);
       const div = document.createElement('div');
       div.classList.add('system');
       const chat = document.createElement('div');
@@ -70,16 +78,21 @@
       document.querySelector('#chat-list').appendChild(div);
     });
     socket.on('exit', function (data) {
-      document.querySelector('.number-count').textContent = `(${data.number})`
       document.querySelector('.room-owner').textContent = (data.owner)
       document.querySelector('.room-owner').style.color = (data.owner)
       const users = data.users;
+      const numberTag = document.querySelector('.number-count')
+      numberTag.innerHTML = ''
+      numberTag.textContent = `(${data.number})`
+      const usersSpan = document.createElement('span');
       users.forEach((name) => {
+        console.log('----',name);
         const span = document.createElement('span');
         span.textContent = `${name} `;
         span.style.color = name;
-        document.querySelector('.number-count').insertAdjacentElement('afterbegin', span);
+        usersSpan.appendChild(span);
       })
+      numberTag.insertAdjacentElement('afterbegin',usersSpan);
       const div = document.createElement('div');
       div.classList.add('system');
       const chat = document.createElement('div');
@@ -96,6 +109,13 @@
       }
       const name = document.createElement('div');
       name.textContent = data.user;
+      if ('{{user}}' !== name.textContent) {
+        const dm = document.createElement('button');
+        dm.textContent = '귓속말'
+        dm.dataset.user = data.user;
+        dm.addEventListener('click', sendDM);
+        name.appendChild(dm)
+      }
       const owner = document.querySelector('.room-owner').textContent;
       if ('{{user}}' === owner && name.textContent !== owner) {
         const banBtn = document.createElement('button');
@@ -144,12 +164,24 @@
           console.error(err);
         });
     });
+
+    function sendDM(e) {
+      const id = e.target.dataset.user;
+      const prompt = window.prompt('귓속말을 입력하세요.');
+      const owner = document.querySelector('.room-owner').textContent;
+      socket.emit('dm', { target: id, msg: prompt, from: '{{user}}' });
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.ban'), function() {
+      el.addEventListener('click', ban);
+    });
+    socket.on('dm', function(data) {
+      alert(data.from + '님에게서 귓속말이 도착했습니다: ' + data.msg);
+    })
+    
     function ban(e) {
       const id = e.target.dataset.user;
-      console.log('----id', id)
       const name = e.target.parentElement.textContent;
       const owner = document.querySelector('.room-owner').textContent;
-      console.log('{{user}}', owner);
       if(confirm(`${name}를 강퇴하시겠습니까?`)) {
         socket.emit('ban', { id });
       }

@@ -30,15 +30,10 @@ router.post('/room', async (req, res, next) => {
       max: req.body.max,
       owner: req.session.color,
       password: req.body.password,
-      members: req.session.color,
     });
     const io = req.app.get('io');
     io.of('/room').emit('newRoom', newRoom);
-    if (newRoom.password) {
-      res.redirect(`/room/${newRoom._id}?password=${req.body.password}`);
-    } else {
-      res.redirect(`/room/${newRoom._id}`);
-    }
+    res.redirect(`/room/${newRoom._id}?password=${req.body.password}`);
   } catch (error) {
     console.error(error);
     next(error);
@@ -91,8 +86,42 @@ router.get('/room/:id/owner', async (req, res, next) => {
 
 router.get('/room/:id/users', async (req, res, next) => {
   try {
-    const users = await User.find({ room: req.params.id }, 'name');
+    const users = await User.find({ room: req.params.id }, 'name socket');
     res.send(users);
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+});
+
+router.post('/room/:id/sys', async (req, res, next) => {
+  try {
+    const chat =
+      req.body.type === 'join'
+        ? `${req.body.name}님이 입장하셨습니다.`
+        : `${req.body.name}님이 퇴장하셨습니다.`;
+    await Chat.create({
+      room: req.params.id,
+      user: 'system',
+      chat,
+    });
+    const users = await User.find({ room: req.params.id }, 'name socket');
+    const usersName = [];
+    users.forEach((user) => {
+      usersName.push(user.name);
+    });
+    req.app
+      .get('io')
+      .of('/chat')
+      .to(req.params.id)
+      .emit(req.body.type, {
+        user: 'system',
+        chat,
+        number: req.app.get('io').of('/chat').adapter.rooms[req.params.id]
+          .length,
+        owner: req.body.owner,
+        users: usersName,
+      });
   } catch (error) {
     console.error(error);
     next(error);
@@ -168,7 +197,11 @@ router.get('/room/:id', async (req, res, next) => {
     }
     const chats = await Chat.find({ room: room._id }).sort('createdAt');
     const users = await User.find({ room: req.params.id }, 'name');
-    const owner = room.owner;
+    const usersName = [];
+    users.forEach((user) => {
+      usersName.push(user.name);
+    });
+    usersName.push(req.session.color);
 
     return res.render('chat', {
       room,
@@ -177,10 +210,7 @@ router.get('/room/:id', async (req, res, next) => {
       user: req.session.color,
       number:
         (rooms && rooms[req.params.id] && rooms[req.params.id].length + 1) || 1,
-      users:
-        (rooms && rooms[req.params.id] && rooms[req.params.id].length + 1) === 1
-          ? owner
-          : users,
+      users: usersName,
     });
   } catch (error) {
     console.error(error);

@@ -1,6 +1,9 @@
 const mongoose = require('mongoose');
 
 const { Schema } = mongoose;
+const {
+  Types: { ObjectId },
+} = Schema;
 const userSchema = new Schema({
   socket: {
     type: String,
@@ -11,8 +14,9 @@ const userSchema = new Schema({
     required: true,
   },
   room: {
-    type: String,
+    type: ObjectId,
     required: true,
+    ref: 'Room',
   },
   createdAt: {
     type: Date,

@@ -33,7 +33,7 @@ module.exports = (server, app, sessionMiddleware) => {
     } = req;
     const roomId = referer
       .split('/')
-      [referer.split('/').length - 1].replace(/\?,+/, '');
+      [referer.split('/').length - 1].replace(/\?.+/, '');
     socket.join(roomId);
     const signedCookie = req.signedCookies['connect.sid'];
     const connectSID = cookie.sign(signedCookie, process.env.COOKIE_SECRET);
@@ -48,7 +48,7 @@ module.exports = (server, app, sessionMiddleware) => {
     });
     console.log('사용자 생성 요청 성공');
 
-    const response = await axios.get(
+    const usersArray = await axios.get(
       `http://localhost:8005/room/${roomId}/users`,
       {
         headers: {
@@ -56,17 +56,37 @@ module.exports = (server, app, sessionMiddleware) => {
         },
       }
     );
-    const users = [];
-    response.data.forEach((user) => {
-      users.push(user.name);
+
+    const usersName = [];
+    usersArray.data.forEach((user) => {
+      usersName.push(user.name);
     });
 
-    socket.to(roomId).emit('join', {
-      user: 'system',
-      chat: `${req.session.color}님이 입장하셨습니다.`,
-      number: socket.adapter.rooms[roomId].length,
-      users: users,
+    const response = await axios.get(
+      `http://localhost:8005/room/${roomId}/owner`,
+      {
+        headers: {
+          Cookie: `connect.sid=s%3A${connectSID}`,
+        },
+      }
+    );
+    let owner = response.data.owner;
+
+    await axios.post(`http://localhost:8005/room/${roomId}/sys`, {
+      type: 'join',
+      headers: {
+        Cookie: `connect.sid=s%3A${connectSID}`,
+      },
+      owner,
+      name: req.session.color,
     });
+
+    // socket.to(roomId).emit('join', {
+    //   // user: 'system',
+    //   // chat: `${req.session.color}님이 입장하셨습니다.`,
+    //   // number: socket.adapter.rooms[roomId].length,
+    //   // users: usersName,
+    // });
 
     socket.on('disconnect', async () => {
       try {
@@ -83,28 +103,19 @@ module.exports = (server, app, sessionMiddleware) => {
           },
         });
         console.log('사용자 제거 요청 성공');
-        const response = await axios.get(
-          `http://localhost:8005/room/${roomId}/owner`,
-          {
-            headers: {
-              Cookie: `connect.sid=s%3A${connectSID}`,
-            },
-          }
-        );
-        let owner = response.data.owner;
 
-        const result = await axios.get(
-          `http://localhost:8005/room/${roomId}/users`,
-          {
-            headers: {
-              Cookie: `connect.sid=s%3A${connectSID}`,
-            },
-          }
-        );
-        const users = [];
-        result.data.forEach((user) => {
-          users.push(user.name);
-        });
+        // const result = await axios.get(
+        //   `http://localhost:8005/room/${roomId}/users`,
+        //   {
+        //     headers: {
+        //       Cookie: `connect.sid=s%3A${connectSID}`,
+        //     },
+        //   }
+        // );
+        // const usersName = [];
+        // result.data.forEach((user) => {
+        //   usersName.push(user.name);
+        // });
         if (userCount === 0) {
           await axios.delete(`http://localhost:8005/room/${roomId}`, {
             headers: {
@@ -124,14 +135,37 @@ module.exports = (server, app, sessionMiddleware) => {
             );
             owner = newOwner.data;
           }
-          socket.to(roomId).emit('exit', {
-            user: 'system',
-            chat: `${req.session.color}님이 퇴장하셨습니다.`,
-            number: socket.adapter.rooms[roomId].length,
-            owner: owner,
-            users: users,
+          await axios.post(`http://localhost:8005/room/${roomId}/sys`, {
+            type: 'exit',
+            headers: {
+              Cookie: `connect.sid=s%3A${connectSID}`,
+            },
+            owner,
+            name: req.session.color,
           });
+          // socket.to(roomId).emit('exit', {
+          //   // user: 'system',
+          //   // chat: `${req.session.color}님이 퇴장하셨습니다.`,
+          //   // number: socket.adapter.rooms[roomId].length,
+          //   // owner: owner,
+          //   users: usersName,
+          // });
         }
+      } catch (error) {
+        console.error(error);
+      }
+    });
+    socket.on('dm', async (data) => {
+      try {
+        const user = await axios.get(`http://localhost:8005/user`, {
+          headers: {
+            Cookie: `connect.sid=s%3A${connectSID}`,
+          },
+          params: {
+            name: data.target,
+          },
+        });
+        socket.to(user.data.socket).emit('dm', data);
       } catch (error) {
         console.error(error);
       }
