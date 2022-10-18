@@ -180,9 +180,8 @@
     
     function ban(e) {
       const id = e.target.dataset.user;
-      const name = e.target.parentElement.textContent;
       const owner = document.querySelector('.room-owner').textContent;
-      if(confirm(`${name}를 강퇴하시겠습니까?`)) {
+      if(confirm(`${id}를 강퇴하시겠습니까?`)) {
         socket.emit('ban', { id });
       }
     }

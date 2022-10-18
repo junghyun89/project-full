@@ -39,6 +39,7 @@ module.exports = (server, app, sessionMiddleware) => {
     const connectSID = cookie.sign(signedCookie, process.env.COOKIE_SECRET);
 
     await axios.post(`http://localhost:8005/user`, {
+      type: 'create',
       socket: socket.id,
       name: req.session.color,
       room: roomId,
@@ -81,41 +82,22 @@ module.exports = (server, app, sessionMiddleware) => {
       name: req.session.color,
     });
 
-    // socket.to(roomId).emit('join', {
-    //   // user: 'system',
-    //   // chat: `${req.session.color}님이 입장하셨습니다.`,
-    //   // number: socket.adapter.rooms[roomId].length,
-    //   // users: usersName,
-    // });
-
     socket.on('disconnect', async () => {
       try {
         console.log('chat 네임스페이스 접속 해제');
         socket.leave(roomId);
         const currentRoom = socket.adapter.rooms[roomId];
         const userCount = currentRoom ? currentRoom.length : 0;
-        await axios.delete(`http://localhost:8005/user`, {
+
+        await axios.post(`http://localhost:8005/user`, {
+          type: 'delete',
           headers: {
             Cookie: `connect.sid=s%3A${connectSID}`,
           },
-          params: {
-            name: req.session.color,
-          },
+          name: req.session.color,
         });
         console.log('사용자 제거 요청 성공');
 
-        // const result = await axios.get(
-        //   `http://localhost:8005/room/${roomId}/users`,
-        //   {
-        //     headers: {
-        //       Cookie: `connect.sid=s%3A${connectSID}`,
-        //     },
-        //   }
-        // );
-        // const usersName = [];
-        // result.data.forEach((user) => {
-        //   usersName.push(user.name);
-        // });
         if (userCount === 0) {
           await axios.delete(`http://localhost:8005/room/${roomId}`, {
             headers: {
@@ -135,6 +117,7 @@ module.exports = (server, app, sessionMiddleware) => {
             );
             owner = newOwner.data;
           }
+          console.log('----?owner', owner);
           await axios.post(`http://localhost:8005/room/${roomId}/sys`, {
             type: 'exit',
             headers: {
@@ -143,13 +126,6 @@ module.exports = (server, app, sessionMiddleware) => {
             owner,
             name: req.session.color,
           });
-          // socket.to(roomId).emit('exit', {
-          //   // user: 'system',
-          //   // chat: `${req.session.color}님이 퇴장하셨습니다.`,
-          //   // number: socket.adapter.rooms[roomId].length,
-          //   // owner: owner,
-          //   users: usersName,
-          // });
         }
       } catch (error) {
         console.error(error);

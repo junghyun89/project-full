@@ -42,12 +42,17 @@ router.post('/room', async (req, res, next) => {
 
 router.post('/user', async (req, res, next) => {
   try {
-    await User.create({
-      socket: req.body.socket,
-      name: req.body.name,
-      room: req.body.room,
-    });
-    res.send('ok');
+    if (req.body.type === 'create') {
+      await User.create({
+        socket: req.body.socket,
+        name: req.body.name,
+        room: req.body.room,
+      });
+      res.send('ok');
+    } else if (req.body.type === 'delete') {
+      await User.deleteOne({ name: req.body.name });
+      res.send('ok');
+    }
   } catch (error) {
     console.error(error);
     next(error);
@@ -58,16 +63,6 @@ router.get(`/user`, async (req, res, next) => {
   try {
     const user = await User.findOne({ name: req.query.name });
     res.send({ socket: user.socket });
-  } catch (error) {
-    console.error(error);
-    next(error);
-  }
-});
-
-router.delete(`/user`, async (req, res, next) => {
-  try {
-    await User.remove({ name: req.query.name });
-    res.send('ok');
   } catch (error) {
     console.error(error);
     next(error);
@@ -122,6 +117,7 @@ router.post('/room/:id/sys', async (req, res, next) => {
         owner: req.body.owner,
         users: usersName,
       });
+    res.send('ok');
   } catch (error) {
     console.error(error);
     next(error);
