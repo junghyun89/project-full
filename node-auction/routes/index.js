@@ -70,28 +70,36 @@ router.post(
       const good = await Good.create({
         OwnerId: req.user.id,
         name,
+        end: req.body.end,
         img: req.file.filename,
         price,
       });
       const end = new Date();
-      end.setDate(end.getDate() + 1);
+      end.setHours(end.getHours() + good.end);
       schedule.scheduleJob(end, async () => {
         const success = await Auction.findOne({
           where: { GoodId: good.id },
           order: [['bid', 'DESC']],
         });
-        await Good.update(
-          { SoldId: success.UserId },
-          { where: { id: good.id } }
-        );
-        await User.update(
-          {
-            money: sequelize.literal(`money - ${success.bid}`),
-          },
-          {
-            where: { id: success.UserId },
-          }
-        );
+        if (success) {
+          await Good.update(
+            { SoldId: success.UserId },
+            { where: { id: good.id } }
+          );
+          await User.update(
+            {
+              money: sequelize.literal(`money - ${success.bid}`),
+            },
+            {
+              where: { id: success.UserId },
+            }
+          );
+        } else {
+          await Good.update(
+            { SoldId: good.OwnerId },
+            { where: { id: good.id } }
+          );
+        }
       });
       res.redirect('/');
     } catch (error) {
@@ -145,10 +153,13 @@ router.post('/good/:id/bid', isLoggedIn, async (req, res, next) => {
     if (good.Auctions[0] && good.Auctions[0].bid >= bid) {
       return res.status(403).send('이전 입찰가보다 높아야 합니다.');
     }
+    if (good.OwnerId === req.user.id) {
+      return res.status(403).send('경매 등록자는 입찰할 수 없습니다.');
+    }
     const result = await Auction.create({
       bid,
       msg,
-      userId: req.user.id,
+      UserId: req.user.id,
       GoodId: req.params.id,
     });
     req.app.get('io').to(req.params.id).emit('bid', {
