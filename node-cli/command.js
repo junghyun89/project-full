@@ -85,6 +85,34 @@ const makeTemplate = (type, name, directory) => {
   }
 };
 
+const copyFile = (name, directory) => {
+  if (exist(name)) {
+    mkdirp(directory);
+    fs.copyFileSync(name, path.join(directory, name));
+    console.log(chalk.green(name, '복사 완료'));
+  } else {
+    console.error(chalk.bold.red('파일이 존재하지 않습니다.'));
+  }
+};
+
+const rimraf = (p) => {
+  if (exist(p)) {
+    try {
+      const dir = fs.readdirSync(p);
+      dir.forEach((d) => {
+        rimraf(path.join(p, d)); // 재귀(중첩 문제에는)
+      });
+      fs.rmdirSync(p);
+      console.log(chalk.green(p, '폴더를 삭제했습니다.'));
+    } catch (error) {
+      fs.unlinkSync(p);
+      console.log(chalk.green(p, '파일을 삭제했습니다.'));
+    }
+  } else {
+    console.error(chalk.bold.red('파일 또는 폴더가 존재하지 않습니다.'));
+  }
+};
+
 program.version('0.0.1', '-v, --veresion').name('cli');
 
 program
@@ -96,6 +124,22 @@ program
   .option('-d, --directory [path]', '생성 경로를 입력하세요', '.')
   .action((type, options) => {
     makeTemplate(type, options.filename, options.directory);
+  });
+
+program
+  .command('copy <name> <directory>')
+  .usage('<name> <directory>')
+  .description('파일을 복사합니다.')
+  .action((name, directory) => {
+    copyFile(name, directory);
+  });
+
+program
+  .command('rimraf <path>')
+  .usage('<path>')
+  .description('저장한 경로와 그 아래 파일/폴더를 지웁니다.')
+  .action((path) => {
+    rimraf(path);
   });
 
 program.action((cmd, args) => {
