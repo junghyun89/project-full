@@ -1,19 +1,19 @@
 import Sequelize from 'sequelize';
-import config from '../config/config.json';
-import User from './user';
-import Post from './post';
-import Story from './story';
-import Comment from './comment';
+import config from '../config/config.js';
+import User from './user.js';
+import Post from './post.js';
+import Story from './story.js';
+import Comment from './comment.js';
 
 const env = process.env.NODE_ENV || 'development';
 config[env];
 
 const db = {};
 const sequelize = new Sequelize(
-  config.database,
-  config.username,
-  config.password,
-  config
+  config[env].database,
+  config[env].username,
+  config[env].password,
+  config[env]
 );
 
 db.sequelize = sequelize;
@@ -32,4 +32,4 @@ Post.associate(db);
 Story.associate(db);
 Comment.associate(db);
 
-export default db;
+export { db, sequelize };
