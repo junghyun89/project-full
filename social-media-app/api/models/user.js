@@ -22,11 +22,11 @@ export default class User extends Sequelize.Model {
           allowNull: false,
         },
         coverPic: {
-          type: Sequelize.STRING(100),
+          type: Sequelize.STRING(300),
           allowNull: true,
         },
         profilePic: {
-          type: Sequelize.STRING(100),
+          type: Sequelize.STRING(300),
           allowNull: true,
         },
         city: {

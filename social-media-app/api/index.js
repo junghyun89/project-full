@@ -13,6 +13,17 @@ import { sequelize } from './models/index.js';
 
 const app = express();
 
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', true);
+  next();
+});
+app.use(express.json());
+app.use(
+  cors({
+    origin: 'http://localhost:3000',
+  })
+);
+app.use(cookieParser());
 sequelize
   .sync({ force: false })
   .then(() => {
@@ -21,10 +32,6 @@ sequelize
   .catch((err) => {
     console.error(err);
   });
-
-app.use(express.json());
-app.use(cors());
-app.use(cookieParser);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/comment', commentRoutes);
