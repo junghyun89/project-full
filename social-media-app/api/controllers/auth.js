@@ -10,7 +10,6 @@ export const register = async (req, res) => {
 
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(password, salt);
-    console.log('---hash', hashedPassword);
     await User.create({
       username,
       email,
@@ -32,7 +31,7 @@ export const login = async (req, res, next) => {
     if (!checkPassword)
       return res.status(400).send('Wrong password or username!');
 
-    const token = jwt.sign({ id: user.id }, 'secretkey');
+    const token = jwt.sign({ id: user.id }, 'secretKey');
     const { password, ...others } = user.dataValues;
 
     res
@@ -42,8 +41,7 @@ export const login = async (req, res, next) => {
       .status(200)
       .send(others);
   } catch (error) {
-    console.error(error);
-    next(error);
+    return res.status(500).send(error);
   }
 };
 

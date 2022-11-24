@@ -57,12 +57,12 @@ export default class User extends Sequelize.Model {
     db.User.belongsToMany(db.Post, { through: 'likes', onDelete: 'CASCADE' });
     db.User.belongsToMany(db.User, {
       foreignKey: 'followerUserId',
-      as: 'Followings',
+      as: 'Followers',
       through: 'relationships',
     });
     db.User.belongsToMany(db.User, {
       foreignKey: 'followedUserId',
-      as: 'Followers',
+      as: 'Followeds',
       through: 'relationships',
     });
   }

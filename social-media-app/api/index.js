@@ -2,6 +2,7 @@ import express from 'express';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import multer from 'multer';
 
 dotenv.config();
 import authRoutes from './routes/auth.js';
@@ -33,10 +34,26 @@ sequelize
     console.error(err);
   });
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, '../client/public/upload');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
+
+app.post('/api/upload', upload.single('file'), (req, res) => {
+  const file = req.file;
+  res.status(200).send(file.filename);
+});
+
 app.use('/api/auth', authRoutes);
-app.use('/api/comment', commentRoutes);
-app.use('/api/like', likeRoutes);
-app.use('/api/post', postRoutes);
+app.use('/api/comments', commentRoutes);
+app.use('/api/likes', likeRoutes);
+app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 
 app.listen(8800, () => {
