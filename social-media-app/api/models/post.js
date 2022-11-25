@@ -28,6 +28,6 @@ export default class Post extends Sequelize.Model {
   static associate(db) {
     db.Post.belongsTo(db.User, { onDelete: 'CASCADE' });
     db.Post.hasMany(db.Comment, { onDelete: 'CASCADE' });
-    db.Post.belongsToMany(db.User, { through: 'likes', onDelete: 'CASCADE' });
+    db.Post.belongsToMany(db.User, { through: 'likes', as: 'liker', onDelete: 'CASCADE' });
   }
 }
