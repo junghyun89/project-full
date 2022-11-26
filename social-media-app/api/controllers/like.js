@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 
 export const getLikes = async (req, res) => {
   try {
-    let post = await Post.findOne({
+    const post = await Post.findOne({
       where: { id: req.query.postId },
       include: { model: User, as: 'liker', attributes: ['id'] },
     });

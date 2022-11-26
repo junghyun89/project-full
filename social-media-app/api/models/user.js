@@ -61,12 +61,12 @@ export default class User extends Sequelize.Model {
     });
     db.User.belongsToMany(db.User, {
       foreignKey: 'followerUserId',
-      as: 'Followers',
+      as: 'Followeds',
       through: 'relationships',
     });
     db.User.belongsToMany(db.User, {
       foreignKey: 'followedUserId',
-      as: 'Followeds',
+      as: 'Followers',
       through: 'relationships',
     });
   }

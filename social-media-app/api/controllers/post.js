@@ -5,6 +5,7 @@ import moment from 'moment';
 
 export const getPosts = async (req, res) => {
   try {
+    const userId = parseInt(req.query.userId);
     let ids = [];
     const token = req.cookies.accessToken;
     if (!token) return res.status(401).send('Not logged in!');
@@ -14,9 +15,10 @@ export const getPosts = async (req, res) => {
       ids.push(userInfo.id);
       const user = await User.findOne({
         where: { id: userInfo.id },
-        include: { model: User, attributes: ['id'], as: 'Followers' },
+        include: { model: User, attributes: ['id'], as: 'Followeds' },
       });
-      user.Followers.map((el) => ids.push(el.dataValues.id));
+      user.Followeds.map((el) => ids.push(el.dataValues.id));
+      ids = userId ? userId : ids;
       let posts = await Post.findAll({
         where: { UserId: ids },
         include: {
