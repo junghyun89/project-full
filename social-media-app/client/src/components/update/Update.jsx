@@ -9,9 +9,9 @@ const Update = ({ setOpenUpdate, user }) => {
   const [cover, setCover] = useState(null);
   const [profile, setProfile] = useState(null);
   const [texts, setTexts] = useState({
-    name: user.name ? user.name : '',
-    city: user.city ? user.city : '',
-    website: user.website ? user.website : '',
+    name: '',
+    city: '',
+    website: '',
   });
 
   const { update } = useContext(AuthContext);
@@ -28,16 +28,14 @@ const Update = ({ setOpenUpdate, user }) => {
   };
 
   const handleChange = (e) => {
-    setTexts((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setTexts((prev) => ({ ...prev, [e.target.name]: [e.target.value] }));
   };
 
   const queryClient = useQueryClient();
 
   const mutation = useMutation(
-    async (user) => {
-      const res = await makeRequest.put('/users', user);
-      await update(res.data);
-      return res.data;
+    (user) => {
+      return makeRequest.put('/users', user);
     },
     {
       onSuccess: () => {
@@ -45,6 +43,7 @@ const Update = ({ setOpenUpdate, user }) => {
       },
     }
   );
+  console.log('---user', user);
   const handleClick = async (e) => {
     e.preventDefault();
     let coverUrl;
@@ -52,12 +51,10 @@ const Update = ({ setOpenUpdate, user }) => {
 
     coverUrl = cover ? await upload(cover) : user.coverPic;
     profileUrl = profile ? await upload(profile) : user.profilePic;
-    mutation.mutate({
-      ...texts,
-      coverPic: coverUrl,
-      profilePic: profileUrl,
-    });
+    mutation.mutate({ ...texts, coverPic: coverUrl, profilePic: profileUrl });
     setOpenUpdate(false);
+    await update(user.id);
+
   };
 
   return (
@@ -107,6 +104,20 @@ const Update = ({ setOpenUpdate, user }) => {
               onChange={(e) => setProfile(e.target.files[0])}
             />
           </div>
+          <label>Email</label>
+          <input
+            type="text"
+            value={texts.email}
+            name="email"
+            onChange={handleChange}
+          />
+          <label>Password</label>
+          <input
+            type="text"
+            value={texts.password}
+            name="password"
+            onChange={handleChange}
+          />
           <label>Name</label>
           <input
             type="text"

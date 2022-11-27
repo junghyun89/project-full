@@ -21,12 +21,6 @@ const Register = () => {
 
     try {
       await axios.post('http://localhost:8800/api/auth/register', inputs);
-      setInputs({
-        username: '',
-        email: '',
-        password: '',
-        name: '',
-      });
     } catch (error) {
       setError(error.response.data);
     }
@@ -56,28 +50,24 @@ const Register = () => {
               placeholder="Username"
               name="username"
               onChange={handleChange}
-              value={inputs.username}
             />
             <input
               type="email"
               placeholder="Email"
               name="email"
               onChange={handleChange}
-              value={inputs.email}
             />
             <input
               type="password"
               placeholder="Password"
               name="password"
               onChange={handleChange}
-              value={inputs.password}
             />
             <input
               type="text"
               placeholder="Name"
               name="name"
               onChange={handleChange}
-              value={inputs.name}
             />
             {error && error}
             <button onClick={handleClick}>Register</button>

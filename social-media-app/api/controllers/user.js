@@ -14,22 +14,25 @@ export const getUser = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   try {
+    console.log('----------');
     const { name, city, website, profilePic, coverPic } = req.body;
+    console.log('----body', req.body);
     const token = req.cookies.accessToken;
     if (!token) return res.status(401).send('Not logged in!');
 
     jwt.verify(token, 'secretKey', async (err, userInfo) => {
       if (err) return res.status(403).send('Token is not valid!');
+      console.log('--info', userInfo);
       const user = await User.findOne({ where: { id: userInfo.id } });
+      console.log('---user', user);
       await user.update({
-        name,
-        city,
-        website,
+        name: name[0],
+        city: city[0],
+        website: website[0],
         coverPic,
         profilePic,
       });
-      const { password, ...others } = user.dataValues;
-      return res.status(200).send(others);
+      return res.status(200).send('Updated!');
     });
   } catch (error) {
     return res.status(500).send(error);

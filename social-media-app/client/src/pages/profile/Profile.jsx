@@ -34,6 +34,7 @@ const Profile = () => {
         return res.data;
       })
   );
+  console.log(relationshipData);
 
   const queryClient = useQueryClient();
 

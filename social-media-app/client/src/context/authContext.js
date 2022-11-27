@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { createContext, useEffect, useState } from 'react';
 import { makeRequest } from '../axios';
 
@@ -9,19 +8,14 @@ export const AuthContextProvider = ({ children }) => {
     JSON.parse(localStorage.getItem('user')) || null
   );
 
-  const update = async (user) => {
-    setCurrentUser(user);
+  const update = async (userId) => {
+    const res = await makeRequest.get(`/users/find/${userId}`);
+    console.log('----res', res);
+    setCurrentUser(res);
   };
 
   const login = async (inputs) => {
-    const res = await axios.post(
-      'http://localhost:8800/api/auth/login',
-      inputs,
-      {
-        withCredentials: true,
-      }
-    );
-
+    const res = await makeRequest.post('/auth/login', inputs);
     setCurrentUser(res.data);
   };
 
