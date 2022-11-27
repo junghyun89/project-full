@@ -20,8 +20,11 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      console.log(1);
       await login(inputs);
+      console.log(2);
       navigate('/');
+      console.log(3);
     } catch (error) {
       setError(error.response.data);
     }
