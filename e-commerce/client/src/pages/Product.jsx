@@ -1,4 +1,5 @@
-import { Add, Remove } from '@material-ui/icons';
+import Add from '@mui/icons-material/Add';
+import Remove from '@mui/icons-material/Remove';
 import styled from 'styled-components';
 import Announcement from '../components/Announcement';
 import Footer from '../components/Footer';

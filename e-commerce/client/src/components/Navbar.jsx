@@ -1,5 +1,6 @@
-import { Badge } from '@material-ui/core';
-import { Search, ShoppingCartOutlined } from '@material-ui/icons';
+import Badge from '@mui/icons-material/Badge';
+import Search from '@mui/icons-material/Search';
+import ShoppingCartOutlined from '@mui/icons-material/ShoppingCartOutlined';
 import React from 'react';
 import styled from 'styled-components';
 import { mobile } from '../responsive';
